@@ -21,10 +21,19 @@
                 <CollectionView.ItemTemplate>
                     <DataTemplate x:DataType="vm:InvoiceListItemViewModel">
                         <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
-                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
-                                <Label Text="{Binding InvoiceNumber}" FontFamily="VazirBold" FontSize="16" TextColor="{StaticResource TextPrimary}" />
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="12">
+                                <HorizontalStackLayout Spacing="8">
+                                    <Label Text="{Binding InvoiceNumber}" FontFamily="VazirBold" FontSize="16" TextColor="{StaticResource TextPrimary}" VerticalOptions="Center" />
+                                    <Border BackgroundColor="{Binding SyncTagBackground}"
+                                            StrokeThickness="0"
+                                            Padding="8,4"
+                                            StrokeShape="RoundRectangle 8"
+                                            VerticalOptions="Center">
+                                        <Label Text="{Binding SyncTagText}" FontFamily="VazirMedium" FontSize="10" TextColor="{Binding SyncTagForeground}" />
+                                    </Border>
+                                </HorizontalStackLayout>
                                 <Label Grid.Row="1" Text="{Binding PersianStatus}" Style="{StaticResource SubtitleLabel}" />
-                                <VerticalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Center" Spacing="4">
+                                <VerticalStackLayout Grid.Column="1" Grid.RowSpan="3" VerticalOptions="Center" Spacing="4">
                                     <Label Text="{Binding TotalDisplay}" FontFamily="VazirBold" FontSize="14" TextColor="{StaticResource TextPrimary}" HorizontalTextAlignment="End" />
                                     <Label Text="{Binding DisplayUpdatedAt}" FontFamily="Vazir" FontSize="11" TextColor="{StaticResource TextSecondary}" HorizontalTextAlignment="End" />
                                 </VerticalStackLayout>

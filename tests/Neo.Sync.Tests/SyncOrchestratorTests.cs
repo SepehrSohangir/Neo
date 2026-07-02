@@ -6,7 +6,7 @@ using Neo.Sync.Api;
 
 namespace Neo.Sync.Tests;
 
-public class UnitTest1
+public class SyncOrchestratorTests
 {
     [Fact]
     public async Task Duplicate_event_id_is_idempotent()
@@ -44,6 +44,53 @@ public class UnitTest1
         var changes = await ExecuteAsync(dbName, orchestrator => orchestrator.GetChangesAsync(DemoIdentity.DefaultStoreId, 0, 10, Guid.NewGuid()));
         Assert.Equal(2, changes.Changes.Count);
         Assert.Equal(2, changes.ToCursor);
+    }
+
+    [Fact]
+    public async Task GetChanges_excludes_events_originated_by_requesting_device()
+    {
+        var dbName = nameof(GetChanges_excludes_events_originated_by_requesting_device);
+        await SeedAsync(dbName);
+
+        var deviceId = Guid.NewGuid();
+        var invoiceId = Guid.NewGuid();
+        var eventId = Guid.NewGuid();
+
+        var upload = new SyncUploadRequest(
+            DemoIdentity.DefaultStoreId,
+            deviceId,
+            [
+                new SyncEnvelopeDto(
+                    eventId,
+                    DemoIdentity.DefaultStoreId,
+                    deviceId,
+                    DemoIdentity.DemoUserId,
+                    invoiceId,
+                    InvoiceEventType.InvoiceCreated,
+                    $"{invoiceId:N}:{eventId:N}",
+                    DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    0,
+                    DateTimeOffset.UtcNow,
+                    JsonSerializer.SerializeToElement(new
+                    {
+                        invoiceNumber = "INV-ECHO-TEST",
+                        status = InvoiceLifecycleStatus.Submitted,
+                        items = new[]
+                        {
+                            new InvoiceItemDto(Guid.NewGuid(), DemoIdentity.ProductAppleId, "Apple", 1, 2.50m, 2.50m)
+                        }
+                    }, SerializerOptions.Default))
+            ]);
+
+        var uploadResponse = await ExecuteAsync(dbName, orchestrator => orchestrator.ProcessUploadAsync(upload));
+        Assert.True(uploadResponse.Results[0].Accepted);
+
+        var ownChanges = await ExecuteAsync(dbName, orchestrator => orchestrator.GetChangesAsync(DemoIdentity.DefaultStoreId, 0, 10, deviceId));
+        Assert.Empty(ownChanges.Changes);
+
+        var otherDeviceChanges = await ExecuteAsync(dbName, orchestrator => orchestrator.GetChangesAsync(DemoIdentity.DefaultStoreId, 0, 10, Guid.NewGuid()));
+        Assert.Single(otherDeviceChanges.Changes);
+        Assert.Equal(eventId, otherDeviceChanges.Changes[0].EventId);
     }
 
     private static async Task SeedAsync(string dbName)

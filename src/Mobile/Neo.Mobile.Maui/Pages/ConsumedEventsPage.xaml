@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Neo.Mobile.Maui.Pages.ConsumedEventsPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Neo.Mobile.Maui.ViewModels"
+    x:DataType="vm:ConsumedEventsViewModel"
+    Style="{StaticResource PageRoot}">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,12">
+            <Button Text="بازگشت" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButton}" WidthRequest="90" />
+            <Label Grid.Column="1" Text="رویدادهای مصرف‌شده" Style="{StaticResource TitleLabel}" VerticalOptions="Center" Margin="12,0,0,0" />
+        </Grid>
+
+        <Label Grid.Row="1" Text="{Binding StatusMessage}" Style="{StaticResource SubtitleLabel}" Margin="0,0,0,12" />
+
+        <RefreshView Grid.Row="2" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Events}">
+                <CollectionView.EmptyView>
+                    <Label Text="پس از همگام‌سازی با سرور، رویدادهای دریافتی اینجا نمایش داده می‌شوند." Style="{StaticResource SubtitleLabel}" HorizontalTextAlignment="Center" Margin="0,40" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:ConsumedEventItemViewModel">
+                        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                            <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                                <Label Text="{Binding EventTypeLabel}" FontFamily="VazirBold" FontSize="15" TextColor="{StaticResource TextPrimary}" />
+                                <Border Grid.Column="1"
+                                        BackgroundColor="{StaticResource Success}"
+                                        StrokeThickness="0"
+                                        Padding="8,4"
+                                        StrokeShape="RoundRectangle 8"
+                                        VerticalOptions="Center">
+                                    <Label Text="مصرف‌شده" FontFamily="VazirMedium" FontSize="10" TextColor="White" />
+                                </Border>
+
+                                <Label Grid.Row="1" Grid.ColumnSpan="2" Text="{Binding ShortEventId}" FontFamily="Vazir" FontSize="12" TextColor="{StaticResource TextSecondary}" Margin="0,6,0,0" />
+                                <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding SequenceDisplay}" Style="{StaticResource SubtitleLabel}" Margin="0,4,0,0" />
+                                <Label Grid.Row="3" Grid.ColumnSpan="2" Text="{Binding AppliedAtDisplay}" FontFamily="Vazir" FontSize="11" TextColor="{StaticResource TextSecondary}" Margin="0,4,0,0" />
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+    </Grid>
+</ContentPage>

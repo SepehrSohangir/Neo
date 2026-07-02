@@ -39,6 +39,14 @@ public sealed class DashboardViewModel : ViewModelBase
             IsEnabled = true,
             Route = nameof(Pages.InvoiceListPage)
         });
+        Tiles.Add(new DashboardTile
+        {
+            Title = "رویدادها",
+            Icon = "📡",
+            BackgroundColor = Color.FromArgb("#ECFDF5"),
+            IsEnabled = true,
+            Route = nameof(Pages.ConsumedEventsPage)
+        });
         Tiles.Add(new DashboardTile { Title = "خرید", Icon = "📦", BackgroundColor = Color.FromArgb("#F3F4F6"), IsEnabled = false });
         Tiles.Add(new DashboardTile { Title = "انبار", Icon = "🏪", BackgroundColor = Color.FromArgb("#F3F4F6"), IsEnabled = false });
         Tiles.Add(new DashboardTile { Title = "حسابداری", Icon = "📊", BackgroundColor = Color.FromArgb("#F3F4F6"), IsEnabled = false });

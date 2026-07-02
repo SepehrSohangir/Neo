@@ -34,11 +34,13 @@ public static class MauiProgram
 		builder.Services.AddTransient<DashboardViewModel>();
 		builder.Services.AddTransient<InvoiceListViewModel>();
 		builder.Services.AddTransient<InvoiceEditorViewModel>();
+		builder.Services.AddTransient<ConsumedEventsViewModel>();
 
 		builder.Services.AddTransient<LoginPage>();
 		builder.Services.AddTransient<DashboardPage>();
 		builder.Services.AddTransient<InvoiceListPage>();
 		builder.Services.AddTransient<InvoiceEditorPage>();
+		builder.Services.AddTransient<ConsumedEventsPage>();
 		builder.Services.AddSingleton<AppShell>();
 
 #if DEBUG

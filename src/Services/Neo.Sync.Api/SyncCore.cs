@@ -238,6 +238,17 @@ public sealed class SyncOrchestrator(SyncDbContext dbContext, IIntegrationEventP
 
         if (deviceId.HasValue)
         {
+            var ownEventIds = await dbContext.SyncInbox
+                .Where(x => x.StoreId == storeId && x.DeviceId == deviceId.Value && x.Accepted)
+                .Select(x => x.EventId)
+                .ToListAsync(cancellationToken);
+
+            if (ownEventIds.Count > 0)
+            {
+                var ownEventIdSet = ownEventIds.ToHashSet();
+                rows = rows.Where(x => !ownEventIdSet.Contains(x.EventId)).ToList();
+            }
+
             var checkpoint = await dbContext.DeviceCheckpoints.FindAsync([storeId, deviceId.Value], cancellationToken);
             if (checkpoint is null)
             {

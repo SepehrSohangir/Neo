@@ -46,6 +46,17 @@ public sealed class MobileRepository
         await connection.CreateTableAsync<OutboundSyncQueueItem>();
         await connection.CreateTableAsync<InboundChangeLogItem>();
         await connection.CreateTableAsync<LocalProductPrice>();
+        await MigrateInboundChangeLogIfNeededAsync();
+    }
+
+    private async Task MigrateInboundChangeLogIfNeededAsync()
+    {
+        var columns = await connection.GetTableInfoAsync(nameof(InboundChangeLogItem));
+        if (columns.Any(column => string.Equals(column.Name, "ChangeId", StringComparison.OrdinalIgnoreCase)))
+        {
+            await connection.ExecuteAsync($"DROP TABLE {nameof(InboundChangeLogItem)}");
+            await connection.CreateTableAsync<InboundChangeLogItem>();
+        }
     }
 
     public Task<List<LocalInvoice>> GetInvoicesAsync(Guid storeId) =>
@@ -56,6 +67,20 @@ public sealed class MobileRepository
 
     public Task<List<LocalProductPrice>> GetProductsAsync(Guid storeId) =>
         connection.Table<LocalProductPrice>().Where(x => x.StoreId == storeId).ToListAsync();
+
+    public async Task<List<InboundChangeLogItem>> GetConsumedInboundEventsAsync(Guid storeId)
+    {
+        var items = await connection.Table<InboundChangeLogItem>()
+            .Where(x => x.StoreId == storeId)
+            .OrderByDescending(x => x.ServerSequence)
+            .ToListAsync();
+
+        return items
+            .GroupBy(x => x.EventId)
+            .Select(group => group.OrderByDescending(x => x.ServerSequence).First())
+            .OrderByDescending(x => x.ServerSequence)
+            .ToList();
+    }
 
     public Task<List<OutboundSyncQueueItem>> GetPendingQueueAsync(Guid storeId) =>
         connection.Table<OutboundSyncQueueItem>()
@@ -321,16 +346,22 @@ public sealed class MobileRepository
                 }
             }
 
-            await connection.InsertAsync(new InboundChangeLogItem
+            try
             {
-                ChangeId = Guid.NewGuid(),
-                EventId = change.EventId,
-                StoreId = change.StoreId,
-                ServerSequence = change.ServerSequence,
-                EventType = (int)change.EventType,
-                PayloadJson = change.Payload.GetRawText(),
-                AppliedAtTicks = DateTimeOffset.UtcNow.UtcTicks
-            });
+                await connection.InsertAsync(new InboundChangeLogItem
+                {
+                    EventId = change.EventId,
+                    StoreId = change.StoreId,
+                    ServerSequence = change.ServerSequence,
+                    EventType = (int)change.EventType,
+                    PayloadJson = change.Payload.GetRawText(),
+                    AppliedAtTicks = DateTimeOffset.UtcNow.UtcTicks
+                });
+            }
+            catch (SQLiteException ex) when (ex.Result == SQLite3.Result.Constraint)
+            {
+                // Another sync pass may have recorded the same event.
+            }
         }
 
         var state = await GetOrCreateStoreStateAsync(response.StoreId, deviceId);
@@ -491,6 +522,8 @@ public sealed class SyncApiClient(HttpClient httpClient)
 
 public sealed class OfflineSyncService(MobileRepository repository, SyncApiClient apiClient, AppSession session)
 {
+    private readonly SemaphoreSlim syncGate = new(1, 1);
+
     public async Task InitializeAsync()
     {
         await repository.InitializeAsync();
@@ -570,43 +603,56 @@ public sealed class OfflineSyncService(MobileRepository repository, SyncApiClien
 
     public async Task SyncAsync(CancellationToken cancellationToken = default)
     {
-        await EnsureSnapshotAsync(cancellationToken);
-        var state = await repository.GetOrCreateStoreStateAsync(session.StoreId, session.DeviceId);
-        var pending = await repository.GetPendingQueueAsync(session.StoreId);
-
-        if (pending.Count > 0)
+        if (!await syncGate.WaitAsync(0, cancellationToken))
         {
-            var upload = new SyncUploadRequest(
-                session.StoreId,
-                session.DeviceId,
-                pending.Select(x => new SyncEnvelopeDto(
-                    x.EventId,
-                    x.StoreId,
-                    x.DeviceId,
-                    x.UserId,
-                    x.AggregateId,
-                    (InvoiceEventType)x.EventType,
-                    x.IdempotencyKey,
-                    x.ClientLocalVersion,
-                    x.ClientBaseServerVersion,
-                    new DateTimeOffset(x.CreatedAtTicks, TimeSpan.Zero),
-                    JsonSerializer.Deserialize<JsonElement>(x.PayloadJson))).ToList());
-
-            var uploadResponse = await apiClient.UploadAsync(session.BaseUrl, upload, session.AccessToken, cancellationToken);
-            await repository.MarkUploadResultsAsync(session.StoreId, uploadResponse.Results);
+            return;
         }
 
-        var changes = await apiClient.GetChangesAsync(session.BaseUrl, session.StoreId, state.LastSyncCursor, session.DeviceId, session.AccessToken, cancellationToken);
-        await repository.ApplyChangesAsync(session.DeviceId, changes);
-
-        if (changes.ToCursor > state.LastSyncCursor)
+        try
         {
-            await apiClient.AckAsync(session.BaseUrl, new SyncAckRequest(session.StoreId, session.DeviceId, changes.ToCursor), session.AccessToken, cancellationToken);
+            await EnsureSnapshotAsync(cancellationToken);
+            var state = await repository.GetOrCreateStoreStateAsync(session.StoreId, session.DeviceId);
+            var pending = await repository.GetPendingQueueAsync(session.StoreId);
+
+            if (pending.Count > 0)
+            {
+                var upload = new SyncUploadRequest(
+                    session.StoreId,
+                    session.DeviceId,
+                    pending.Select(x => new SyncEnvelopeDto(
+                        x.EventId,
+                        x.StoreId,
+                        x.DeviceId,
+                        x.UserId,
+                        x.AggregateId,
+                        (InvoiceEventType)x.EventType,
+                        x.IdempotencyKey,
+                        x.ClientLocalVersion,
+                        x.ClientBaseServerVersion,
+                        new DateTimeOffset(x.CreatedAtTicks, TimeSpan.Zero),
+                        JsonSerializer.Deserialize<JsonElement>(x.PayloadJson))).ToList());
+
+                var uploadResponse = await apiClient.UploadAsync(session.BaseUrl, upload, session.AccessToken, cancellationToken);
+                await repository.MarkUploadResultsAsync(session.StoreId, uploadResponse.Results);
+            }
+
+            var changes = await apiClient.GetChangesAsync(session.BaseUrl, session.StoreId, state.LastSyncCursor, session.DeviceId, session.AccessToken, cancellationToken);
+            await repository.ApplyChangesAsync(session.DeviceId, changes);
+
+            if (changes.ToCursor > state.LastSyncCursor)
+            {
+                await apiClient.AckAsync(session.BaseUrl, new SyncAckRequest(session.StoreId, session.DeviceId, changes.ToCursor), session.AccessToken, cancellationToken);
+            }
+        }
+        finally
+        {
+            syncGate.Release();
         }
     }
 
     public Task<List<LocalInvoice>> GetInvoicesAsync() => repository.GetInvoicesAsync(session.StoreId);
     public Task<int> GetPendingCountAsync() => repository.GetPendingCountAsync(session.StoreId);
+    public Task<List<InboundChangeLogItem>> GetConsumedEventsAsync() => repository.GetConsumedInboundEventsAsync(session.StoreId);
 }
 
 public sealed class LocalStoreState
@@ -691,13 +737,29 @@ public sealed class OutboundSyncQueueItem
 public sealed class InboundChangeLogItem
 {
     [PrimaryKey]
-    public Guid ChangeId { get; set; }
     public Guid EventId { get; set; }
     public Guid StoreId { get; set; }
     public long ServerSequence { get; set; }
     public int EventType { get; set; }
     public string PayloadJson { get; set; } = string.Empty;
     public long AppliedAtTicks { get; set; }
+
+    [Ignore]
+    public string PersianEventType => (InvoiceEventType)EventType switch
+    {
+        InvoiceEventType.InvoiceCreated => "ایجاد فاکتور",
+        InvoiceEventType.InvoiceUpdated => "ویرایش فاکتور",
+        InvoiceEventType.InvoiceVoided => "ابطال فاکتور",
+        InvoiceEventType.PriceUpdated => "به‌روزرسانی قیمت",
+        InvoiceEventType.StoreSyncChanged => "تغییر همگام‌سازی",
+        _ => "نامشخص"
+    };
+
+    [Ignore]
+    public string DisplayAppliedAt => new DateTimeOffset(AppliedAtTicks, TimeSpan.Zero).ToLocalTime().ToString("yyyy/MM/dd HH:mm:ss");
+
+    [Ignore]
+    public string ShortEventId => $"{EventId:N}"[..13] + "…";
 }
 
 public sealed class LocalProductPrice
