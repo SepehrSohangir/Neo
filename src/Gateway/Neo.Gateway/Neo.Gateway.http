@@ -1,0 +1,6 @@
+@Neo.Gateway_HostAddress = http://localhost:5032
+
+GET {{Neo.Gateway_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,80 @@
+services:
+  gateway:
+    build:
+      context: .
+      dockerfile: src/Gateway/Neo.Gateway/Dockerfile
+    container_name: neo-gateway
+    depends_on:
+      auth-api:
+        condition: service_started
+      sync-api:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "8080:8080"
+
+  auth-api:
+    build:
+      context: .
+      dockerfile: src/Services/Neo.Auth.Api/Dockerfile
+    container_name: neo-auth-api
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+    ports:
+      - "8081:8080"
+
+  sync-api:
+    build:
+      context: .
+      dockerfile: src/Services/Neo.Sync.Api/Dockerfile
+    container_name: neo-sync-api
+    depends_on:
+      sqlserver:
+        condition: service_started
+      kafka:
+        condition: service_started
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__SqlServer: "Server=sqlserver,1433;Database=NeoSync;User Id=sa;Password=Your_password123;TrustServerCertificate=True;Encrypt=False"
+      Kafka__BootstrapServers: kafka:9092
+    ports:
+      - "8082:8080"
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: neo-sqlserver
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "Your_password123"
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver-data:/var/opt/mssql
+
+  kafka:
+    image: bitnamilegacy/kafka:3.9
+    container_name: neo-kafka
+    environment:
+      KAFKA_CFG_NODE_ID: "1"
+      KAFKA_CFG_PROCESS_ROLES: "broker,controller"
+      KAFKA_CFG_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CFG_LISTENERS: "PLAINTEXT://:9092,CONTROLLER://:9093"
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: "PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: "1@kafka:9093"
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: "PLAINTEXT"
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_KRAFT_CLUSTER_ID: "MkU3OEVBNTcwNTJENDM2Qk"
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/bitnami/kafka
+
+volumes:
+  sqlserver-data:
+  kafka-data:

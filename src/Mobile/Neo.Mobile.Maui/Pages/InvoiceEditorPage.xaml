@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Neo.Mobile.Maui.Pages.InvoiceEditorPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Neo.Mobile.Maui.ViewModels"
+    x:DataType="vm:InvoiceEditorViewModel"
+    Style="{StaticResource PageRoot}">
+
+    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" Padding="20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,12">
+            <Button Text="بازگشت" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButton}" WidthRequest="90" />
+            <Label Grid.Column="1" Text="ثبت فاکتور فروش" Style="{StaticResource TitleLabel}" VerticalOptions="Center" Margin="12,0,0,0" />
+        </Grid>
+
+        <Border Grid.Row="1" Style="{StaticResource CardBorder}" Margin="0,0,0,12">
+            <VerticalStackLayout Spacing="10">
+                <Label Text="شماره فاکتور" Style="{StaticResource FieldLabel}" />
+                <Border Stroke="{StaticResource Border}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12,0">
+                    <Entry Text="{Binding InvoiceNumber}" Style="{StaticResource InputEntry}" />
+                </Border>
+
+                <Label Text="انتخاب کالا" Style="{StaticResource FieldLabel}" />
+                <Border Stroke="{StaticResource Border}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="8,0">
+                    <Picker ItemsSource="{Binding Products}"
+                            SelectedItem="{Binding SelectedProduct}"
+                            ItemDisplayBinding="{Binding Name}"
+                            Title="کالا را انتخاب کنید"
+                            FontFamily="Vazir"
+                            HeightRequest="48" />
+                </Border>
+                <Button Text="افزودن قلم" Command="{Binding AddLineCommand}" Style="{StaticResource SecondaryButton}" />
+            </VerticalStackLayout>
+        </Border>
+
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Lines}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:InvoiceLineViewModel">
+                    <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                        <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto,Auto">
+                            <Label Text="{Binding ProductName}" FontFamily="VazirBold" FontSize="15" />
+                            <Button Grid.Column="1" Text="حذف"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.RemoveLineCommand}"
+                                    CommandParameter="{Binding .}" Style="{StaticResource SecondaryButton}" WidthRequest="70" HeightRequest="36" FontSize="12" />
+                            <HorizontalStackLayout Grid.Row="1" Grid.ColumnSpan="2" Spacing="12" Margin="0,8,0,0">
+                                <VerticalStackLayout>
+                                    <Label Text="تعداد" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding Quantity}" Keyboard="Numeric" WidthRequest="90" Style="{StaticResource InputEntry}" />
+                                </VerticalStackLayout>
+                                <VerticalStackLayout>
+                                    <Label Text="قیمت واحد" Style="{StaticResource FieldLabel}" />
+                                    <Entry Text="{Binding UnitPrice}" Keyboard="Numeric" WidthRequest="120" Style="{StaticResource InputEntry}" />
+                                </VerticalStackLayout>
+                            </HorizontalStackLayout>
+                            <Label Grid.Row="2" Grid.ColumnSpan="2" Text="{Binding LineTotalDisplay}" FontFamily="VazirBold" TextColor="{StaticResource Primary}" Margin="0,8,0,0" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Border Grid.Row="3" BackgroundColor="{StaticResource CardBackground}" Stroke="{StaticResource Border}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="16" Margin="0,12,0,0">
+            <Grid ColumnDefinitions="*,Auto">
+                <Label Text="جمع کل" FontFamily="VazirMedium" FontSize="15" VerticalOptions="Center" />
+                <Label Grid.Column="1" Text="{Binding TotalAmountDisplay}" FontFamily="VazirBold" FontSize="18" TextColor="{StaticResource Primary}" />
+            </Grid>
+        </Border>
+
+        <VerticalStackLayout Grid.Row="4" Spacing="8" Margin="0,12,0,0">
+            <Button Text="ذخیره فاکتور" Command="{Binding SaveCommand}" Style="{StaticResource PrimaryButton}" />
+            <Label Text="{Binding StatusMessage}" Style="{StaticResource SubtitleLabel}" HorizontalTextAlignment="Center" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

@@ -1,0 +1,6 @@
+@Neo.Invoice.Api_HostAddress = http://localhost:5282
+
+GET {{Neo.Invoice.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Neo.Mobile.Maui.Pages.DashboardPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Neo.Mobile.Maui.ViewModels"
+    x:DataType="vm:DashboardViewModel"
+    Style="{StaticResource PageRoot}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+        <VerticalStackLayout Grid.Row="0" Spacing="6" Margin="0,8,0,20">
+            <Label Text="{Binding WelcomeText}" Style="{StaticResource TitleLabel}" />
+            <Label Text="داشبورد مدیریت فروشگاه" Style="{StaticResource SubtitleLabel}" />
+        </VerticalStackLayout>
+
+        <CollectionView Grid.Row="1"
+                        ItemsSource="{Binding Tiles}"
+                        SelectionMode="Single"
+                        SelectionChanged="OnTileSelected">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="12" VerticalItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:DashboardTile">
+                    <Border BackgroundColor="{Binding BackgroundColor}"
+                            Stroke="{StaticResource Border}"
+                            StrokeThickness="1"
+                            StrokeShape="RoundRectangle 16"
+                            Padding="20"
+                            Opacity="{Binding IsEnabled, Converter={StaticResource BoolToOpacityConverter}}">
+                        <VerticalStackLayout Spacing="10" HorizontalOptions="Center">
+                            <Label Text="{Binding Icon}" FontSize="32" HorizontalTextAlignment="Center" />
+                            <Label Text="{Binding Title}" FontFamily="VazirBold" FontSize="16" TextColor="{StaticResource TextPrimary}" HorizontalTextAlignment="Center" />
+                            <Label Text="به‌زودی" FontFamily="Vazir" FontSize="11" TextColor="{StaticResource TextSecondary}" HorizontalTextAlignment="Center"
+                                   IsVisible="{Binding IsEnabled, Converter={StaticResource InvertedBoolConverter}}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+        <Button Grid.Row="2" Text="خروج از حساب" Command="{Binding LogoutCommand}" Style="{StaticResource SecondaryButton}" Margin="0,16,0,0" />
+    </Grid>
+</ContentPage>

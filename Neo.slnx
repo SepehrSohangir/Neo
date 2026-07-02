@@ -1,0 +1,22 @@
+<Solution>
+  <Folder Name="/src/" />
+  <Folder Name="/src/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Neo.Contracts/Neo.Contracts.csproj" />
+    <Project Path="src/BuildingBlocks/Neo.Eventing/Neo.Eventing.csproj" />
+  </Folder>
+  <Folder Name="/src/Gateway/">
+    <Project Path="src/Gateway/Neo.Gateway/Neo.Gateway.csproj" />
+  </Folder>
+  <Folder Name="/src/Mobile/">
+    <Project Path="src/Mobile/Neo.Mobile.Maui/Neo.Mobile.Maui.csproj" />
+  </Folder>
+  <Folder Name="/src/Services/">
+    <Project Path="src/Services/Neo.Auth.Api/Neo.Auth.Api.csproj" />
+    <Project Path="src/Services/Neo.Invoice.Api/Neo.Invoice.Api.csproj" />
+    <Project Path="src/Services/Neo.ProductPrice.Api/Neo.ProductPrice.Api.csproj" />
+    <Project Path="src/Services/Neo.Sync.Api/Neo.Sync.Api.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Neo.Sync.Tests/Neo.Sync.Tests.csproj" />
+  </Folder>
+</Solution>

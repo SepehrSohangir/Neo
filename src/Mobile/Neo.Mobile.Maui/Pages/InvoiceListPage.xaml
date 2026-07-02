@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Neo.Mobile.Maui.Pages.InvoiceListPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Neo.Mobile.Maui.ViewModels"
+    x:DataType="vm:InvoiceListViewModel"
+    Style="{StaticResource PageRoot}">
+
+    <Grid RowDefinitions="Auto,*,Auto" Padding="20">
+        <Grid Grid.Row="0" ColumnDefinitions="Auto,*" Margin="0,0,0,12">
+            <Button Text="بازگشت" Command="{Binding BackCommand}" Style="{StaticResource SecondaryButton}" WidthRequest="90" />
+            <Label Grid.Column="1" Text="فاکتورهای فروش" Style="{StaticResource TitleLabel}" VerticalOptions="Center" Margin="12,0,0,0" />
+        </Grid>
+
+        <RefreshView Grid.Row="1" Command="{Binding RefreshCommand}" IsRefreshing="{Binding IsRefreshing}">
+            <CollectionView ItemsSource="{Binding Invoices}" SelectionMode="Single" SelectionChanged="OnInvoiceSelected">
+                <CollectionView.EmptyView>
+                    <Label Text="هنوز فاکتوری ثبت نشده است." Style="{StaticResource SubtitleLabel}" HorizontalTextAlignment="Center" Margin="0,40" />
+                </CollectionView.EmptyView>
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="vm:InvoiceListItemViewModel">
+                        <Border Style="{StaticResource CardBorder}" Margin="0,0,0,10">
+                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" ColumnSpacing="12">
+                                <Label Text="{Binding InvoiceNumber}" FontFamily="VazirBold" FontSize="16" TextColor="{StaticResource TextPrimary}" />
+                                <Label Grid.Row="1" Text="{Binding PersianStatus}" Style="{StaticResource SubtitleLabel}" />
+                                <VerticalStackLayout Grid.Column="1" Grid.RowSpan="2" VerticalOptions="Center" Spacing="4">
+                                    <Label Text="{Binding TotalDisplay}" FontFamily="VazirBold" FontSize="14" TextColor="{StaticResource TextPrimary}" HorizontalTextAlignment="End" />
+                                    <Label Text="{Binding DisplayUpdatedAt}" FontFamily="Vazir" FontSize="11" TextColor="{StaticResource TextSecondary}" HorizontalTextAlignment="End" />
+                                </VerticalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+            </CollectionView>
+        </RefreshView>
+
+        <Button Grid.Row="2" Text="فاکتور فروش جدید" Command="{Binding CreateCommand}" Style="{StaticResource PrimaryButton}" Margin="0,16,0,0" />
+    </Grid>
+</ContentPage>

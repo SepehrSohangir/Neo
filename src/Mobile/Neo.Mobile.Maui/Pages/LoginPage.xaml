@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="Neo.Mobile.Maui.Pages.LoginPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:vm="clr-namespace:Neo.Mobile.Maui.ViewModels"
+    x:DataType="vm:LoginViewModel"
+    Style="{StaticResource PageRoot}">
+
+    <ScrollView>
+        <Grid Padding="24" RowDefinitions="*,Auto,*">
+            <VerticalStackLayout Grid.Row="1" Spacing="20">
+                <Border Style="{StaticResource CardBorder}" Padding="28">
+                    <VerticalStackLayout Spacing="18">
+                        <Label Text="سامانه فروش" Style="{StaticResource TitleLabel}" HorizontalTextAlignment="Center" />
+                        <Label Text="ورود به حساب کاربری" Style="{StaticResource SubtitleLabel}" HorizontalTextAlignment="Center" />
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="نام کاربری" Style="{StaticResource FieldLabel}" />
+                            <Border Stroke="{StaticResource Border}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12,0">
+                                <Entry Text="{Binding Username}" Style="{StaticResource InputEntry}" Placeholder="نام کاربری را وارد کنید" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="6">
+                            <Label Text="رمز عبور" Style="{StaticResource FieldLabel}" />
+                            <Border Stroke="{StaticResource Border}" StrokeThickness="1" StrokeShape="RoundRectangle 12" Padding="12,0">
+                                <Entry Text="{Binding Password}" IsPassword="True" Style="{StaticResource InputEntry}" Placeholder="رمز عبور را وارد کنید" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <Button Text="ورود" Command="{Binding LoginCommand}" Style="{StaticResource PrimaryButton}" Margin="0,8,0,0" />
+                        <ActivityIndicator IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}" Color="{StaticResource Primary}" />
+                        <Label Text="{Binding StatusMessage}" Style="{StaticResource SubtitleLabel}" HorizontalTextAlignment="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </VerticalStackLayout>
+        </Grid>
+    </ScrollView>
+</ContentPage>

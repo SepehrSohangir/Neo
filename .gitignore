@@ -1,0 +1,87 @@
+## OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+## IDE / editors
+.vs/
+.idea/
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.rsuser
+
+# VS Code — keep shared settings; ignore local overrides
+.vscode/*
+!.vscode/extensions.json
+!.vscode/launch.json
+!.vscode/tasks.json
+!.vscode/settings.json
+
+## .NET build output
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+artifacts/
+project.lock.json
+project.fragment.lock.json
+
+## NuGet
+*.nupkg
+*.snupkg
+**/[Pp]ackages/*
+!**/[Pp]ackages/build/
+*.nuget.props
+*.nuget.targets
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+*.trx
+*.coverage
+*.coveragexml
+coverage*.json
+coverage*.xml
+TestResults/
+
+## MAUI / mobile
+*.apk
+*.aab
+*.ipa
+*.app
+*.dSYM.zip
+*.dSYM
+
+## User-specific / secrets
+.env
+.env.*
+!.env.example
+secrets.json
+**/appsettings.*.local.json
+
+## Docker local data (if you mount volumes beside compose)
+docker-data/
+data/
+*.mdf
+*.ldf
+
+## Cursor / local agent artifacts (optional local-only)
+canvases/
+
+## Misc
+*.swp
+*~
+*.cache
+*.log
+*.tmp
+*.temp
+*.bak
